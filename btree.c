@@ -175,7 +175,7 @@ void free_btree(Btree_node *btree_root)
     }
 }
 
-Btree_node *create_btree(const char *input)
+Btree_node *create_btree(char *input)
 {
     const char *current_input = input;
     Btree_node *btree_root = NULL;
@@ -199,6 +199,8 @@ Btree_node *create_btree(const char *input)
             while (current_pair_record_node) {
                 if (current_pair_record_node->value == pair_score) {
                     printf("E2");
+
+                    free(input);
                     free_btree(btree_root);
                     free_pair_score(pair_record);
                     exit(EXIT_SUCCESS);
@@ -214,6 +216,8 @@ Btree_node *create_btree(const char *input)
         // E4: Check - Multiple roots
         if (!btree_parent_node) {
             printf("E4");
+
+            free(input);
             free_btree(btree_root);
             free_pair_score(pair_record);
             exit(EXIT_SUCCESS);
@@ -230,6 +234,8 @@ Btree_node *create_btree(const char *input)
             } else { // Child status: OO
                 // E3: Check - Parent Has More than Two Children
                 printf("E3");
+
+                free(input);
                 free_btree(btree_root);
                 free_pair_score(pair_record);
                 exit(EXIT_SUCCESS);
@@ -273,6 +279,17 @@ bool btree_has_cycle(Btree_node *btree_root)
     return false;
 }
 
+void string_push_back(char *target, char ch)
+{
+    char *current_target = target;
+    while (*current_target) {
+        current_target++;
+    }
+
+    *current_target = ch;
+    *(current_target + 1) = '\0';
+} 
+  
 void display_btree_s_expression(Btree_node *btree_root, char **s_expression)
 {
     if (!btree_root) {
@@ -280,23 +297,20 @@ void display_btree_s_expression(Btree_node *btree_root, char **s_expression)
     }
 
     Btree_node *current_btree_node = btree_root;
-    char left_bracket[2] = { '(', 0 };
-    char right_bracket[2] = { ')', 0 };
-
-    strcat(*s_expression, &current_btree_node->value);
+    string_push_back(*s_expression, current_btree_node->value);
 
     if (!current_btree_node->left_child && !current_btree_node->right_child) {
         return;
     }
 
-    strcat(*s_expression, left_bracket);
+    string_push_back(*s_expression, '(');
     display_btree_s_expression(current_btree_node->left_child, s_expression);
-    strcat(*s_expression, right_bracket);
+    string_push_back(*s_expression, ')');
 
     if (current_btree_node->right_child) {
-        strcat(*s_expression, left_bracket);
+        string_push_back(*s_expression, '(');
         display_btree_s_expression(current_btree_node->right_child, s_expression);
-        strcat(*s_expression, right_bracket);
+        string_push_back(*s_expression, ')');
     }
 }
 
@@ -320,6 +334,7 @@ int main()
     int node_amount = is_valid_input_format(input);
     if (node_amount == 0) {
         printf ("E1");
+        free(input);
         exit(EXIT_SUCCESS);
     }
 
@@ -329,6 +344,7 @@ int main()
     bool has_cycle = btree_has_cycle(btree_root);
     if (has_cycle) {
         printf ("E5");
+        free(input);
         free_btree(btree_root);
         exit(EXIT_SUCCESS);
     }
@@ -338,6 +354,7 @@ int main()
     display_btree_s_expression(btree_root, &s_expression);
     printf ("(%s)", s_expression);
 
+    free(input);
     free_btree(btree_root);
     free(s_expression);
 
