@@ -69,3 +69,14 @@ E5
 **Output #01 Explanation**
 
 Node D is both a child of B and a parent of C, but C and B are both child nodes of A. Since D tries to attach itself as parent to a node already above it in the tree, this forms an undirected cycle.
+
+## Run
+
+- Compile:
+    ```shell
+    $ gcc -o btree btree.c
+    ```
+- Run:
+    ```shell
+    $ ./btree
+    ```
