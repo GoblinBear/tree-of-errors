@@ -288,8 +288,17 @@ void string_push_back(char *target, char ch)
 
     *current_target = ch;
     *(current_target + 1) = '\0';
-} 
-  
+}
+
+void display_btree_s_expression(Btree_node *, char **);
+
+void add_brackets_to_child(Btree_node *child, char **s_expression)
+{
+    string_push_back(*s_expression, '(');
+    display_btree_s_expression(child, s_expression);
+    string_push_back(*s_expression, ')');
+}
+
 void display_btree_s_expression(Btree_node *btree_root, char **s_expression)
 {
     if (!btree_root) {
@@ -303,14 +312,9 @@ void display_btree_s_expression(Btree_node *btree_root, char **s_expression)
         return;
     }
 
-    string_push_back(*s_expression, '(');
-    display_btree_s_expression(current_btree_node->left_child, s_expression);
-    string_push_back(*s_expression, ')');
-
+    add_brackets_to_child(current_btree_node->left_child, s_expression);
     if (current_btree_node->right_child) {
-        string_push_back(*s_expression, '(');
-        display_btree_s_expression(current_btree_node->right_child, s_expression);
-        string_push_back(*s_expression, ')');
+        add_brackets_to_child(current_btree_node->right_child, s_expression);
     }
 }
 
@@ -334,22 +338,25 @@ int main()
     int node_amount = is_valid_input_format(input);
     if (node_amount == 0) {
         printf ("E1");
+    
         free(input);
         exit(EXIT_SUCCESS);
     }
 
-    /* E2 - E5 */
+    /* E2, E3, E4 */
     Btree_node *btree_root = create_btree(input);
 
+    /* E5: Check - Input Contains Cycle */
     bool has_cycle = btree_has_cycle(btree_root);
     if (has_cycle) {
         printf ("E5");
+    
         free(input);
         free_btree(btree_root);
         exit(EXIT_SUCCESS);
     }
 
-    // S-Expression
+    // Detect no errors and print out S-Expression for the B-tree
     char *s_expression = (char *)calloc(1000, sizeof(char));
     display_btree_s_expression(btree_root, &s_expression);
     printf ("(%s)", s_expression);
