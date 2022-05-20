@@ -10,12 +10,24 @@ struct _Btree_node {
     Btree_node *right_child;
 };
 
+typedef struct _Stack_node Stack_node;
+struct _Stack_node {
+    Btree_node *value;
+    Stack_node *next;
+};
+
+typedef struct _Pair_score_node Pair_score_node;
+struct _Pair_score_node {
+    int value;
+    Pair_score_node *next;
+};
+
 int is_valid_input_format(const char *input)
 {
     const char *current = input;
-
     int counter = 0;
     int node_amount = 0;
+
     while (*current) {
         // Check if it is formattd as (A,B) (B,C) and
         // all values are single uppercase letters
@@ -59,21 +71,6 @@ int is_valid_input_format(const char *input)
     return node_amount;
 }
 
-typedef struct _Stack_node Stack_node;
-struct _Stack_node {
-    Btree_node *value;
-    Stack_node *next;
-};
-
-bool is_stack_empty(Stack_node **stack_top)
-{
-    if (stack_top) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
 Stack_node *create_stack_node(Btree_node *value)
 {
     Stack_node *new_stack_node = (Stack_node*)calloc(1, sizeof(Stack_node));
@@ -109,31 +106,22 @@ Btree_node *stack_pop(Stack_node **stack_top)
     return value;
 }
 
-typedef struct _Pair_score_node Pair_score_node;
-struct _Pair_score_node {
-    int value;
-    Pair_score_node *next;
-};
-
-Pair_score_node *pair_record = NULL;
-Pair_score_node *pair_record_tail = NULL;
-
-void add_pair_score(int score)
+void add_pair_score(Pair_score_node **pair_record, Pair_score_node **pair_record_tail, int score)
 {
     Pair_score_node *new_pair_score_node = (Pair_score_node*)calloc(1, sizeof(Pair_score_node));
     new_pair_score_node->value = score;
     new_pair_score_node->next = NULL;
 
-    if (pair_record_tail) {
-        pair_record_tail->next = new_pair_score_node;
-        pair_record_tail = new_pair_score_node;
+    if (*pair_record_tail) {
+        (*pair_record_tail)->next = new_pair_score_node;
+        (*pair_record_tail) = new_pair_score_node;
     } else {
-        pair_record = new_pair_score_node;
-        pair_record_tail = new_pair_score_node;
+        (*pair_record) = new_pair_score_node;
+        (*pair_record_tail) = new_pair_score_node;
     }
 }
 
-void free_pair_score()
+void free_pair_score(Pair_score_node *pair_record)
 {
     while (pair_record) {
         Pair_score_node *previos_pair_score_node = pair_record;
@@ -191,6 +179,8 @@ Btree_node *create_btree(const char *input)
 {
     const char *current_input = input;
     Btree_node *btree_root = NULL;
+    Pair_score_node *pair_record = NULL;
+    Pair_score_node *pair_record_tail = NULL;
 
     // Create b-tree root node
     btree_root = create_btree_node(*(current_input + 1));
@@ -210,7 +200,7 @@ Btree_node *create_btree(const char *input)
                 if (current_pair_record_node->value == pair_score) {
                     printf("E2");
                     free_btree(btree_root);
-                    free_pair_score();
+                    free_pair_score(pair_record);
                     exit(EXIT_SUCCESS);
                 }
 
@@ -219,13 +209,13 @@ Btree_node *create_btree(const char *input)
         }
 
         // Add score of new pair
-        add_pair_score(pair_score);
+        add_pair_score(&pair_record, &pair_record_tail, pair_score);
 
         // E4: Check - Multiple roots
         if (!btree_parent_node) {
             printf("E4");
             free_btree(btree_root);
-            free_pair_score();
+            free_pair_score(pair_record);
             exit(EXIT_SUCCESS);
         }
 
@@ -241,13 +231,15 @@ Btree_node *create_btree(const char *input)
                 // E3: Check - Parent Has More than Two Children
                 printf("E3");
                 free_btree(btree_root);
-                free_pair_score();
+                free_pair_score(pair_record);
                 exit(EXIT_SUCCESS);
             }
         }
 
         current_input = current_input + 6;
     }
+
+    free_pair_score(pair_record);
 
     return btree_root;
 }
@@ -338,7 +330,6 @@ int main()
     if (has_cycle) {
         printf ("E5");
         free_btree(btree_root);
-        free_pair_score();
         exit(EXIT_SUCCESS);
     }
 
@@ -348,7 +339,6 @@ int main()
     printf ("(%s)", s_expression);
 
     free_btree(btree_root);
-    free_pair_score();
     free(s_expression);
 
     return 0;
